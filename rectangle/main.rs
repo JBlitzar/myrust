@@ -13,6 +13,10 @@ impl Rectangle {
         let h_pass = other.height < self.height;
         return w_pass && h_pass
     }
+    fn double_dimensions(&mut self) {
+        self.width *= 2;
+        self.height *= 2;
+    }
 }
 impl Rectangle {
     fn square(size: u32) -> Self {
@@ -74,5 +78,12 @@ fn main() {
         s1,
         s1.area()
     );
+
+    let mut rect = Rectangle {
+        width: 2,
+        height: 2
+    };
+    rect.double_dimensions();
+    println!("Doubled rectangle: {:?}", rect);
 }
 

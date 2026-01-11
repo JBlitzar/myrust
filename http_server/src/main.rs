@@ -7,12 +7,15 @@ struct Header {
 }
 impl Header {
     fn parse(s: String) -> Self {
-        let v: Vec<&str> = s.split(": ").collect();
-        let part1 = v[0];
-        let part2 = v[1];
+        if let Some((name, value)) = s.split_once(": ") { 
+            return Self {
+                name: String::from(name),
+                value: String::from(value)
+            }
+        }
         Self {
-            name: String::from(part1),
-            value: String::from(part2)
+            name: String::from(""),
+            value: String::from("")
         }
        
     }

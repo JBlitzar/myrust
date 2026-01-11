@@ -4,12 +4,15 @@ struct Rectangle {
     height: u32,
 }
 
-fn area(rectangle: &Rectangle) -> u32 {
-    rectangle.width * rectangle.height
-}
-
-fn volume(cuboid: &Cuboid) -> u32 {
-    cuboid.width * cuboid.height * cuboid.depth
+impl Rectangle {
+    fn area(&self) -> u32 {
+        self.width * self.height
+    }
+    fn can_hold(&self, other: &Rectangle) -> bool {
+        let w_pass = other.width < self.width;
+        let h_pass = other.height < self.height;
+        return w_pass && h_pass
+    }
 }
 
 struct Cuboid {
@@ -18,16 +21,22 @@ struct Cuboid {
     depth: u32,
 }
 
+impl Cuboid {
+    fn volume(&self) -> u32 {
+        return self.width * self.height * self.depth
+    }
+}
+
 fn main() {
-    let rect1 = Rectangle {
+
+ let rect1 = Rectangle {
         width: 30,
         height: 50,
     };
-
     println!(
         "rect1 ({:?}) is {} square pixels.",
         rect1,
-        area(&rect1)
+        rect1.area()
     );
 
     let c1 = Cuboid {
@@ -36,6 +45,19 @@ fn main() {
         depth: 15,
     };
 
-    println!("The volume of the cuboid is {} voxels.", volume(&c1));
+    println!("The volume of the cuboid is {} voxels.", c1.volume());
+
+   
+    let rect2 = Rectangle {
+        width: 10,
+        height: 40,
+    };
+    let rect3 = Rectangle {
+        width: 60,
+        height: 45,
+    };
+
+    println!("Can rect1 hold rect2? {}", rect1.can_hold(&rect2));
+    println!("Can rect1 hold rect3? {}", rect1.can_hold(&rect3));
 }
 

@@ -14,6 +14,14 @@ impl Rectangle {
         return w_pass && h_pass
     }
 }
+impl Rectangle {
+    fn square(size: u32) -> Self {
+        Self {
+            width: size,
+            height: size,
+        }
+    }
+}
 
 struct Cuboid {
     width: u32,
@@ -57,7 +65,14 @@ fn main() {
         height: 45,
     };
 
+    let s1 = Rectangle::square(10);
+
     println!("Can rect1 hold rect2? {}", rect1.can_hold(&rect2));
     println!("Can rect1 hold rect3? {}", rect1.can_hold(&rect3));
+    println!(
+        "s1 ({:?}) is {} square pixels.",
+        s1,
+        s1.area()
+    );
 }
 

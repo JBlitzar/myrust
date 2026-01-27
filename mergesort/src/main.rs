@@ -1,3 +1,5 @@
+use rand::seq::SliceRandom;
+use rand::rng;
 
 fn is_sorted(arr: &[i32]) -> bool {
     for i in 1..arr.len() {
@@ -68,7 +70,19 @@ fn main() {
     println!("{:?}", arr);
     assert! (is_sorted(&arr));
 
+   
+
+    let mut random_arr: Vec<i32> = (0..1_000_000).collect();
+
+    let mut rng = rng();
+    random_arr.shuffle(&mut rng);
+
+    merge_sort_wrap(&mut random_arr);
+    assert! (is_sorted(&random_arr));
+
     println!("All tests passed!");
+
+
    
    
 }

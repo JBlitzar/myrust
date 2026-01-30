@@ -1,7 +1,7 @@
 use rand::seq::SliceRandom;
 use rand::rng;
 
-fn is_sorted(arr: &[i32]) -> bool {
+fn is_sorted<T: Ord>(arr: &[T]) -> bool {
     for i in 1..arr.len() {
         if arr[i - 1] > arr[i] {
             return false;
@@ -10,12 +10,12 @@ fn is_sorted(arr: &[i32]) -> bool {
     return true;
 }
 
-fn merge_sort_wrap(arr: &mut [i32]){
-    let mut buf = vec![0; arr.len()];
+fn merge_sort_wrap<T: Ord + Copy>(arr: &mut [T]){
+    let mut buf = vec![arr[0]; arr.len()];
     merge_sort(arr, &mut buf, 0);
 }
 
-fn merge_sort(arr: &mut [i32], buf: &mut [i32], b_offset: usize) {
+fn merge_sort<T: Ord + Copy>(arr: &mut [T], buf: &mut [T], b_offset: usize) {
     if arr.len() <= 1 {
         return;
     }

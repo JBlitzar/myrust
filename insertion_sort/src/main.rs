@@ -1,5 +1,7 @@
 use rand::seq::SliceRandom;
 use rand::rng;
+use std::time::SystemTime;
+
 
 fn is_sorted<T: Ord>(arr: &[T]) -> bool {
     for i in 1..arr.len() {
@@ -44,6 +46,17 @@ fn main() {
 
     insertion_sort(&mut random_arr);
     assert! (is_sorted(&random_arr));
+
+    let start = SystemTime::now();
+
+
+    let mut backwards_array: Vec<i32> = (0..1_000).rev().collect();
+    insertion_sort(&mut backwards_array);
+    assert! (is_sorted(&backwards_array));
+
+    let end = SystemTime::now();
+
+    println!("Time taken to sort backwards array: {:?}", end.duration_since(start).unwrap());
 
     println!("All tests passed!");
 

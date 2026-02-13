@@ -42,4 +42,14 @@ fn main() {
     let mut arr = vec![10,9,8,1,2,3,4,7,6,5,1_000_000, 999_999, 1_000_001];
     radix_sort(&mut arr);
     println!("{:?}", arr);
+
+    let start = std::time::Instant::now();
+
+    let mut arr_ = (0..100_000).collect::<Vec<u32>>();
+    radix_sort(&mut arr_);
+    // println!("{:?}", arr_);
+
+    let duration = start.elapsed();
+    println!("Time taken: {:?}", duration);
+
 }

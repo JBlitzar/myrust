@@ -5,6 +5,7 @@ struct AVLTree {
     left: Option<Box<AVLTree>>,
     right: Option<Box<AVLTree>>,
     height: i32,
+    marked_for_deletion: bool,
 }
 
 impl AVLTree{
@@ -14,6 +15,7 @@ impl AVLTree{
             left: None,
             right: None,
             height: 1,
+            marked_for_deletion: false,
         }
     }
 
@@ -49,6 +51,7 @@ impl AVLTree{
         *self = *new_root;
     }
 
+    
     fn insert(&mut self, value: i32) {
         // descend
         if value <= self.value {
@@ -63,35 +66,116 @@ impl AVLTree{
             }
         }
 
-        // update height
-        self.height = 1 + AVLTree::height_of(&self.left).max(AVLTree::height_of(&self.right)); // 1 + max(left height, right height)
-        // balance
 
+        self.upd_height_and_balance();
+
+    }
+
+    fn _delete_left(&mut self) {
+        self.left = None;
+        self.height = 1 + AVLTree::height_of(&self.left).max(AVLTree::height_of(&self.right)); 
+   
+    }
+
+    fn _delete_right(&mut self) {
+        self.right = None;
+        self.height = 1 + AVLTree::height_of(&self.left).max(AVLTree::height_of(&self.right)); 
+               
+    }
+
+    fn delete(&mut self, value: i32) -> bool { // true if deleted, false if not found
+        let mut deleted = false;
+
+        if value < self.value {
+            if let Some(left) = &mut self.left {
+                deleted = left.delete(value) || deleted;
+            } else {
+                return false; // value not found
+            }
+        } else if value > self.value {
+            if let Some(right) = &mut self.right {
+                deleted = right.delete(value) || deleted;
+            } else {
+                return false; // value not found
+            }
+        } else {// value is the value, delete self
+            self._delete_current_node();
+            return true;
+        };
+
+        if let Some(left) = &mut self.left {
+            if left.marked_for_deletion {
+                self._delete_left();
+                deleted = true;
+            }
+        }else if let Some(right) = &mut self.right {
+            if right.marked_for_deletion {
+                self._delete_right();
+                deleted = true;
+            }
+        }
+    
+        if deleted {
+            self.upd_height_and_balance();
+        }
+        
+        deleted
+    }
+
+    fn upd_height_and_balance(&mut self) {
+        self.height = 1 + AVLTree::height_of(&self.left).max(AVLTree::height_of(&self.right));
         let balance_factor = self.balance_factor();
         if balance_factor > 1 {
-            // If the balance factor is greater than 1, then the current node is unbalanced and we are either in the Left Left case or left Right case. To check whether it is left left case or not, compare the newly inserted key with the key in the left subtree root. 
-            if value < self.left.as_ref().unwrap().value {
-                // Left Left Case
+            if self.left.as_ref().unwrap().balance_factor() >= 0 {
+                // left left
                 self.right_rotate();
             } else {
-                // Left Right Case
+                //left right
                 self.left.as_mut().unwrap().left_rotate();
                 self.right_rotate();
             }
-        } else if balance_factor < -1 {
-            // If the balance factor is less than -1, then the current node is unbalanced and we are either in the Right Right case or Right-Left case. To check whether it is the Right Right case or not, compare the newly inserted key with the key in the right subtree root.    
-            if value > self.right.as_ref().unwrap().value {
-                // Right Right Case
+        }else if balance_factor < -1 {
+            if self.right.as_ref().unwrap().balance_factor() <= 0 {
+                // right right
                 self.left_rotate();
             } else {
-                // Right Left Case
+                // right left
                 self.right.as_mut().unwrap().right_rotate();
                 self.left_rotate();
             }
         }
+    }
+        
 
+    fn find_min(&self) -> i32 {
+        match &self.left {
+            Some(left) => left.find_min(),
+            None => self.value,
+        }
     }
 
+    fn _delete_current_node(&mut self) {
+
+    match (&self.left, &self.right) {
+        (None, None) => {
+            *self = AVLTree::new(0);
+            self.marked_for_deletion = true;
+        }
+        (None, Some(_)) => {
+            *self = *self.right.take().unwrap();
+        }
+        (Some(_), None) => {
+            *self = *self.left.take().unwrap();
+        }
+        (Some(_), Some(_)) => {
+            let successor_value = self.right.as_ref().unwrap().find_min();
+            self.value = successor_value;
+            self.right.as_mut().unwrap().delete(successor_value);
+        }
+    }
+}
+
+   
     fn pprint(&self, depth: usize) {
         if let Some(left) = &self.left {
             left.pprint(depth + 1);
@@ -110,7 +194,7 @@ impl AVLTree{
 }
 
 fn main() {
-    println!("Hello, world!");
+    println!("AVL tree test: inserting a bunch of elements");
     let mut tree = AVLTree::new(10);
     tree.insert(20);
      tree.insert(20);
@@ -123,4 +207,12 @@ fn main() {
     tree.insert(50);
     tree.insert(25);
     tree.pprint(0);
+
+    println!("Deleting some elements");
+    tree.delete(20);
+    tree.delete(20);
+    tree.delete(50);
+    tree.pprint(0);
+
+    
 }

@@ -1,0 +1,10 @@
+page_id_from    page_title_from page_id_to      page_title_to
+10      AccessibleComputing     411964  Computer accessibility
+12      Anarchism       5013592 6 February 1934 crisis
+12      Anarchism       2181459 Abstentionism
+12      Anarchism       839656  Adolf Brand
+12      Anarchism       2731583 Adolf Hitler
+12      Anarchism       192008  Adolphe Thiers
+12      Anarchism       729048  Affinity group
+12      Anarchism       30758   Age of Enlightenment
+12      Anarchism       627     Agriculture

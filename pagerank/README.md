@@ -14,4 +14,6 @@ From the presentation:
 
 I plan to do exactly that. I'll need to parse csvs and manage OOP, but otherwise this is some pretty good practice in both algorithms and blazingly fast memory safe Rust 🚀. 
 
+Plus, there's the damping factor. And the supernode (TODO implement).
 
+I pivoted from OOP to pure vectors.

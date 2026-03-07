@@ -17,3 +17,9 @@ I plan to do exactly that. I'll need to parse csvs and manage OOP, but otherwise
 Plus, there's the damping factor. And the supernode (TODO implement).
 
 I pivoted from OOP to pure vectors.
+
+Switched to CSR from `Vec<Vec<usize>>`. 
+
+And, it turns out that the secret sauce to optimizing your code to be 10x faster is just to build as release!
+
+`RUSTFLAGS="-C target-cpu=native" cargo build --release;./target/release/pagerank`

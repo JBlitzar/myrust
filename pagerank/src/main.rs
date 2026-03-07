@@ -7,8 +7,8 @@ fn main() {
 
 
     let mut page_names: Vec<String> = vec![String::new(); capacity]; // idx is page id, value is page name
-    let mut incoming: Vec<Vec<usize>> = vec![Vec::new(); capacity]; // idx is page id, value is list of incoming links
-    let mut outgoing: Vec<usize> = vec![0; capacity]; // idx is page id, value is number of outgoing links
+    let mut incoming: Vec<Vec<u32>> = vec![Vec::new(); capacity]; // idx is page id, value is list of incoming links
+    let mut outgoing: Vec<u32> = vec![0; capacity]; // idx is page id, value is number of outgoing links
 
     let mut max = 0;
     
@@ -27,6 +27,7 @@ fn main() {
     let mut start = std::time::Instant::now();
     let mut parts;
     let mut min = usize::MAX;
+    let mut total_edges: usize = 0;
     while reader.read_line(&mut line).unwrap() > 0 {
         if is_first_line  {
             is_first_line = false;
@@ -38,7 +39,7 @@ fn main() {
         parts = line.splitn(4, '\t');
         from = parts.next().unwrap().parse().unwrap();
         from_name = parts.next().unwrap();
-        to = parts.next().unwrap().trim_end().parse().unwrap();
+        to = parts.next().unwrap().parse().unwrap();
        
 
         if from > max  {
@@ -61,7 +62,8 @@ fn main() {
         if page_names[from].is_empty() {
             page_names[from] = from_name.to_owned();
         }
-        incoming[to].push(from);
+        total_edges += 1;
+        incoming[to].push(from as u32);
         outgoing[from] += 1;
        
         i += 1;
@@ -78,44 +80,85 @@ fn main() {
         }
         line.clear();
     }
+    // add supernode
+    for page_id in 0..=max {
+        if outgoing[page_id] == 0 {
+            incoming[0].push(page_id as u32);
+            outgoing[page_id] += 1;
+            total_edges += 1;
+        }
+    }
+
+
     println!("Capacity: {}", page_names.len());
     println!("Total lines read: {}", i);
     println!("Max page id: {}, Min page id: {}", max, min);
 
-    let mut page_rank_scores = vec![1.0; max + 1];
-    let mut next_scores = vec![0.0; max + 1];
+    // csr
+    let mut csr_edges   = vec![0; total_edges]; // incoming page ids
+    let mut csr_offsets = vec![0; max + 2]; // start of incoming links
+    let mut edge_index = 0;
+    // for every page, 
+    for page_id in 0..=max {
+        csr_offsets[page_id] = edge_index;  // start of incoming links for this page
+        for &incoming_id in &incoming[page_id] {
+            csr_edges[edge_index] = incoming_id; // set the next value to the id
+            edge_index += 1;
+        }
+    }
+    csr_offsets[max + 1] = edge_index;
+
+    drop(incoming); // free memory
+
+
+
+    let n = max + 1;
+    let mut page_rank_scores = vec![1.0 / n as f32; n];
+    let mut next_scores = vec![0.0; n];
     let mut sum;
-    const D: f64 = 0.85;
-    const EPSILON: f64 = 1e-6;
+    const D: f32 = 0.85;
+    const EPSILON: f32 = 1e-3;
     let mut i=0;
-    let mut t = 0.0;
+    let mut t;
+    let n = (max + 1) as f32;
+    let base = (1.0 - D) / n;
     loop {
-        t = std::time::Instant::now().elapsed().as_secs_f64();
+        t =  std::time::Instant::now();
         for page_id in 0..=max {
             sum = 0.0;
-            for &incoming_id in &incoming[page_id] {
-                sum += page_rank_scores[incoming_id] / outgoing[incoming_id] as f64;
+            let start = csr_offsets[page_id];
+            let end = csr_offsets[page_id + 1];
+            for &incoming_id in &csr_edges[start..end] {
+                sum += page_rank_scores[incoming_id as usize] / outgoing[incoming_id as usize] as f32;
             }
-            sum /= max as f64;
-            next_scores[page_id] = D * sum + (1.0 - D);
+            
+
+            next_scores[page_id] = base + D * sum;
         }
-        std::mem::swap(&mut page_rank_scores, &mut next_scores);
         
         i += 1;
         let max_delta = page_rank_scores.iter().zip(next_scores.iter())
             .map(|(a, b)| (a - b).abs())
-            .fold(0.0, f64::max);
-        if max_delta < EPSILON {
+            .fold(0.0, f32::max);
+        if  max_delta / page_rank_scores[1] < EPSILON {
             break;
         }
-        let elapsed = std::time::Instant::now().elapsed().as_secs_f64() - t;
-        println!("Iterating... {}, delta: {}. Elapsed: {:.2?}", i, max_delta, elapsed);
+        if (i > 100){
+            println!("Reached max iterations. Stopping.");
+            break;
+        }
+        std::mem::swap(&mut page_rank_scores, &mut next_scores);
+
+        println!("Iterating... {}, delta: {}. Elapsed: {:.2?}", i, max_delta, t.elapsed());
     } 
     // println!("Page Rank Scores: {:?}", page_rank_scores);
     // write out
     let file = File::create("page_rank_scores.txt").unwrap();
     let mut writer = std::io::BufWriter::new(file);
     for page_id in 0..=max {
+        if(page_names[page_id].is_empty()) {
+            continue;
+        }
         writeln!(writer, "{}\t{}\t{}", page_id, page_names[page_id], page_rank_scores[page_id]).unwrap();
     }
 

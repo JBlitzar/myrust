@@ -19,3 +19,4 @@ hello_world/main
 
 pagerank/*.csv
 pagerank/page_rank_scores.txt
+pagerank/page_rank_scores.txt.gz

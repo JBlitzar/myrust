@@ -153,13 +153,20 @@ fn main() {
     } 
     // println!("Page Rank Scores: {:?}", page_rank_scores);
     // write out
+
+    let mut page_rank_with_names: Vec<(u32, &str, f32)> = (0..=max as u32)
+        .filter(|&page_id| !page_names[page_id as usize].is_empty())
+        .map(|page_id| (page_id, page_names[page_id as usize].as_str(), page_rank_scores[page_id as usize]))
+        .collect();
+
+    page_rank_with_names.sort_by(|a, b| b.2.partial_cmp(&a.2).unwrap());
+
     let file = File::create("page_rank_scores.txt").unwrap();
     let mut writer = std::io::BufWriter::new(file);
-    for page_id in 0..=max {
-        if(page_names[page_id].is_empty()) {
-            continue;
-        }
-        writeln!(writer, "{}\t{}\t{}", page_id, page_names[page_id], page_rank_scores[page_id]).unwrap();
+    for (page_id, page_name, page_rank) in page_rank_with_names.iter() {     
+        writeln!(writer, "{}\t{}\t{}", page_id, page_name, page_rank).unwrap();
     }
+
+    
 
 }

@@ -154,6 +154,8 @@ fn main() {
     // println!("Page Rank Scores: {:?}", page_rank_scores);
     // write out
 
+
+    // I had AI write these two lines of code because I couldn't be bothered to make idiomatic Rust sorting while keeping track like zip() in Python. 
     let mut page_rank_with_names: Vec<(u32, &str, f32)> = (0..=max as u32)
         .filter(|&page_id| !page_names[page_id as usize].is_empty())
         .map(|page_id| (page_id, page_names[page_id as usize].as_str(), page_rank_scores[page_id as usize]))

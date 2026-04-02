@@ -14,7 +14,8 @@ fn main() {
     
  
     
-    let file = File::open("enwiki.wikilink_graph.2018-03-01.csv").unwrap();
+    // let file = File::open("enwiki.wikilink_graph.2018-03-01.csv").unwrap();
+    let file = File::open("test_graph.csv").unwrap();
     let mut reader = BufReader::with_capacity(64 * 1024 * 1024, file);
     let mut is_first_line = true;
     let mut i = 0;
@@ -61,6 +62,9 @@ fn main() {
         // }
         if page_names[from].is_empty() {
             page_names[from] = from_name.to_owned();
+        }
+        if page_names[to].is_empty() {
+            page_names[to] = parts.next().unwrap().to_owned();
         }
         total_edges += 1;
         incoming[to].push(from as u32);
@@ -140,7 +144,7 @@ fn main() {
         let max_delta = page_rank_scores.iter().zip(next_scores.iter())
             .map(|(a, b)| (a - b).abs())
             .fold(0.0, f32::max);
-        if  max_delta / page_rank_scores[1] < EPSILON {
+        if  max_delta / page_rank_scores[1] < EPSILON && i > 100 {
             break;
         }
         if (i > 100){

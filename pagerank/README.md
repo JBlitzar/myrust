@@ -4,13 +4,14 @@ Attempt to use pagerank on Wikipedia! Dataset courtesy of https://zenodo.org/rec
 
 ## How do I run this?
 
-First of all, get yourself a copy of the data at https://zenodo.org/records/2539424/files/enwiki.wikilink_graph.2018-03-01.csv.gz?download=1  (it's 2.4gb)
+First of all, get yourself a copy of the data at https://zenodo.org/records/2539424/files/enwiki.wikilink_graph.2018-03-01.csv.gz?download=1 (it's 2.4gb)
 
 Then, double-click to extract it.
 
 Then, download the compiled binary at the github release: https://github.com/JBlitzar/myrust/releases/download/pagerank_01/pagerank
 
 That should be all you need! Run this in Terminal, assuming both the code and data are in your downloads folder and you're on mac:
+
 ```
 cd ~/Downloads; chmod +x pagerank;./pagerank
 ```
@@ -19,33 +20,32 @@ This should produce page_rank_scores.txt, showing the sorted pagerank scores. Be
 
 If you just want the scores, they're at the github release: https://github.com/JBlitzar/myrust/releases/tag/pagerank_01
 
-If you want to see the code, check out [src/main.rs](src/main.rs). 
+If you want to see the code, check out [src/main.rs](src/main.rs).
 
 ## How does PageRank work?
 
 From the presentation:
 
 > In more detail:
->  - Assign every page an initial score
->  - In each iteration, update a page’s score to be the sum of:
->     - the score of each page pointing to it, divided by the number of outgoing links from each page
->  - Iterate until scores converge
+>
+> - Assign every page an initial score
+> - In each iteration, update a page’s score to be the sum of:
+>   - the score of each page pointing to it, divided by the number of outgoing links from each page
+> - Iterate until scores converge
 
-I plan to do exactly that. I'll need to parse csvs and manage OOP, but otherwise this is some pretty good practice in both algorithms and blazingly fast memory safe Rust 🚀. 
+I plan to do exactly that. I'll need to parse csvs and manage OOP, but otherwise this is some pretty good practice in both algorithms and blazingly fast memory safe Rust 🚀.
 
 Plus, there's the damping factor. And the supernode.
-
-
 
 ## Stuff I did
 
 I pivoted from OOP to pure vectors for performance.
 
-Switched from `Vec<Vec<usize>>` to CSR for performance (again). 
+Switched from `Vec<Vec<usize>>` to CSR for performance (again).
 
 And, it turns out that the secret sauce to optimizing your code to be 10x faster is just to build as release!
 
-magic command: 
+magic command:
 `RUSTFLAGS="-C target-cpu=native" cargo build --release;./target/release/pagerank`
 
 Anyways, CSR was wild to learn because it flattens arrays. Also, we know how big the data is before running, so we can preallocate it.
@@ -53,6 +53,7 @@ Anyways, CSR was wild to learn because it flattens arrays. Also, we know how big
 ## Some insights (if you can call it that)
 
 top-ranked pages:
+
 ```
 3434750 United States   0.00034004136
 32927   World War II    0.00015744356
@@ -77,6 +78,7 @@ top-ranked pages:
 ```
 
 Bottom-ranked pages:
+
 ```
 10325193	Our Lady's Secondary School, Templemore	0.000000011348568
 44952857	Alfred John Liversedge	0.000000011348568
@@ -94,7 +96,11 @@ Bottom-ranked pages:
 2517243	Kogyoku Tenno	0.0000000113485115
 2517322	Tenji Emperor	0.0000000113485115
 39680474	European Sprint Swimming Championships 1992	0.00000001134851
-11116796	
+11116796
 ```
 
-I hypothesize that "European Sprint Swimming Championships 1992" is ranked at the bottom because it's probably linked relatively few times, but it links out *many* times. 
+I hypothesize that "European Sprint Swimming Championships 1992" is ranked at the bottom because it's probably linked relatively few times, but it links out _many_ times.
+
+## Rust Usage Declaration
+
+![Rust affirmation](/docs/rust_affirmation.png)

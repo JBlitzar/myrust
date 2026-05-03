@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Macroquad Game</title>
+    <style>
+      html,
+      body {
+        margin: 0;
+      }
+
+      body {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        display: block;
+      }
+
+      canvas {
+        margin: 0;
+        width: 800px;
+        height: 600px;
+        overflow: hidden;
+        position: absolute;
+        left: 50vw;
+        top: 50vh;
+        transform: translate(-50%, -50%);
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="glcanvas" tabindex="1"></canvas>
+
+    <script src="https://not-fl3.github.io/miniquad-samples/mq_js_bundle.js"></script>
+    <script>
+      load("dangame.wasm");
+    </script>
+  </body>
+</html>

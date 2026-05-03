@@ -207,8 +207,10 @@ fn handle_input(grid: &Vec<Vec<Cell>>, direction: Direction) -> Vec<Vec<Cell>> {
 
 fn get_new_goal() -> Vec<Cell> {
     let mut has_mastery = false;
+    let mut has_consecutive = false;
     let mut goal = vec![Cell::Empty; 4];
-    while !has_mastery {
+    while !has_mastery || has_consecutive {
+        has_consecutive = false;
         goal = vec![Cell::Empty; 4];
         for i in 0..goal.len() {
             let r = macroquad::rand::gen_range(0, 100);
@@ -222,6 +224,9 @@ fn get_new_goal() -> Vec<Cell> {
                 has_mastery = true;
                 Cell::Mastery
             };
+            if goal[i] != Cell::Empty && i > 0 && goal[i] == goal[i - 1] {
+                has_consecutive = true;
+            }
         }
     }
     goal

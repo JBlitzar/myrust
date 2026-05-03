@@ -259,12 +259,14 @@ async fn main() {
 
     let mut prev_state = state.clone();
 
+    let mut score = 0;
+
     loop {
         counter += 1;
         clear_background(BLACK);
 
         draw_grid(&grid);
-        if state == GameState::Playing {
+        if state == GameState::Playing || state == GameState::GoalReached {
             
             for i in 0..goal.len() {
                 let x = i as f32 * CELL_SIZE/2.0 + OFFSET.0 + 80.0;
@@ -284,6 +286,15 @@ async fn main() {
                 }
             }
             draw_text("Goal:", OFFSET.0, OFFSET.1 - 50.0, 30.0, WHITE);
+
+            draw_text(&format!("Evals graded: {}", score), OFFSET.0, OFFSET.1 + CELL_SIZE * GRID_SIZE as f32 + 40.0, 20.0, WHITE);
+
+            draw_text("Arrows to move. Try to reach the goal! Space to skip.", OFFSET.0, OFFSET.1 + CELL_SIZE * GRID_SIZE as f32 + 20.0, 20.0, WHITE);
+
+        }
+        if state == GameState::Playing {
+            
+            
             if let Some(direction) = get_input() {
                 grid = handle_input(&grid, direction);
                 grid = spawn_new(&grid);
@@ -293,6 +304,9 @@ async fn main() {
         let goal_res = check_goal(&grid, &goal);
         if goal_res != -1 {
             state = GameState::GoalReached;
+            if prev_state != state {
+                score += 1;
+            }
 
             draw_rectangle_lines(
                 OFFSET.0,
@@ -300,17 +314,21 @@ async fn main() {
                 CELL_SIZE * GRID_SIZE as f32,
                 CELL_SIZE,
                 5.0,
-                RED,
+                GREEN,
             );
         }
 
-        if state == GameState::GoalReached && counter > (macroquad::time::get_fps() as i32 * 2.0 as i32) as usize {
-            goal = get_new_goal();
-            state = GameState::Playing;
-        }
+        
         if prev_state != state {
             counter = 0;
             prev_state = state.clone();
+        }
+
+        if state == GameState::GoalReached && counter > (macroquad::time::get_fps() as i32 * 2.0 as i32) as usize || is_key_pressed(KeyCode::Space) {
+            goal = get_new_goal();
+            state = GameState::Playing;
+            grid = vec![vec![Cell::Empty; GRID_SIZE]; GRID_SIZE];
+            grid = spawn_new(&grid);
         }
 
         next_frame().await;

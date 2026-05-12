@@ -1,3 +1,4 @@
+use std::time::Instant;
 use std::vec;
 
 use macroquad::prelude::*;
@@ -13,7 +14,7 @@ fn window_conf() -> Conf {
     }
 }
 
-fn draw_cell(x: f32, y: f32, w: f32, h: f32, radius: f32, color: Color, text: Option<&str>) {
+fn draw_cell(x: f32, y: f32, w: f32, h: f32, radius: f32, color: Color, text: Option<&str>, locked: bool) {
     draw_rectangle(x + radius, y, w - radius * 2.0, h, color);
     draw_rectangle(x, y + radius, w, h - radius * 2.0, color);
 
@@ -32,6 +33,9 @@ fn draw_cell(x: f32, y: f32, w: f32, h: f32, radius: f32, color: Color, text: Op
             text_size,
             BLACK,
         );
+    }
+    if locked {
+        draw_rectangle_lines(x, y, w, h, 2.0, BLUE);
     }
 }
 
@@ -84,23 +88,23 @@ const OFFSET: (f32, f32) = (
     (600.0 - CELL_SIZE * GRID_SIZE as f32) / 2.0,
 );
 
-fn draw_grid(grid: &Vec<Vec<Cell>>) {
+fn draw_grid(grid: &Vec<Vec<Cell>>, locked_bitmask: &Vec<Vec<bool>>) {
     for i in 0..grid.len() {
         for j in 0..grid[i].len() {
             let x = j as f32 * CELL_SIZE + OFFSET.0;
             let y = i as f32 * CELL_SIZE + OFFSET.1;
             match grid[i][j] {
-                Cell::Empty => draw_cell(x, y, CELL_SIZE, CELL_SIZE, 10.0, GRAY, None),
+                Cell::Empty => draw_cell(x, y, CELL_SIZE, CELL_SIZE, 10.0, GRAY, None, locked_bitmask[i][j]),
                 Cell::InsufficientEvidence => {
-                    draw_cell(x, y, CELL_SIZE, CELL_SIZE, 10.0, ORANGE, Some("IE"))
+                    draw_cell(x, y, CELL_SIZE, CELL_SIZE, 10.0, ORANGE, Some("IE"), locked_bitmask[i][j])
                 }
                 Cell::EmergingUnderstanding => {
-                    draw_cell(x, y, CELL_SIZE, CELL_SIZE, 10.0, YELLOW, Some("EU"))
+                    draw_cell(x, y, CELL_SIZE, CELL_SIZE, 10.0, YELLOW, Some("EU"), locked_bitmask[i][j])
                 }
                 Cell::PartialMastery => {
-                    draw_cell(x, y, CELL_SIZE, CELL_SIZE, 10.0, LIME, Some("PM"))
+                    draw_cell(x, y, CELL_SIZE, CELL_SIZE, 10.0, LIME, Some("PM"), locked_bitmask[i][j])
                 }
-                Cell::Mastery => draw_cell(x, y, CELL_SIZE, CELL_SIZE, 10.0, GREEN, Some("M")),
+                Cell::Mastery => draw_cell(x, y, CELL_SIZE, CELL_SIZE, 10.0, GREEN, Some("M"), locked_bitmask[i][j]),
             }
         }
     }
@@ -120,11 +124,25 @@ fn get_input() -> Option<Direction> {
     }
 }
 
-fn rot90(grid: &Vec<Vec<Cell>>) -> Vec<Vec<Cell>> {
-    let mut new_grid = vec![vec![Cell::Empty; grid.len()]; grid[0].len()];
-    for i in 0..grid.len() {
-        for j in 0..grid[i].len() {
-            new_grid[j][grid.len() - 1 - i] = grid[i][j];
+// fn rot90(grid: &Vec<Vec<Cell>>) -> Vec<Vec<Cell>> {
+//     let mut new_grid = vec![vec![Cell::Empty; grid.len()]; grid[0].len()];
+//     for i in 0..grid.len() {
+//         for j in 0..grid[i].len() {
+//             new_grid[j][grid.len() - 1 - i] = grid[i][j];
+//         }
+//     }
+//     new_grid
+// }
+fn rot90<T: Clone>(grid: &Vec<Vec<T>>) -> Vec<Vec<T>> {
+    if grid.is_empty() || grid[0].is_empty() {
+        return Vec::new();
+    }
+    let rows = grid.len();
+    let cols = grid[0].len();
+    let mut new_grid = vec![vec![grid[0][0].clone(); rows]; cols];
+    for i in 0..rows {
+        for j in 0..cols {
+            new_grid[j][rows - 1 - i] = grid[i][j].clone();
         }
     }
     new_grid
@@ -138,38 +156,53 @@ enum GameState {
     Lost,
 }
 
-fn handle_input(grid: &Vec<Vec<Cell>>, direction: Direction) -> Vec<Vec<Cell>> {
+fn handle_input(grid: &Vec<Vec<Cell>>, direction: Direction, locked_bitmask: &Vec<Vec<bool>>) -> Vec<Vec<Cell>> {
     let mut g = grid.clone();
+    let mut l: Vec<Vec<bool>> = locked_bitmask.clone();
     match direction {
         Direction::Up => g = rot90(&rot90(&g)),
         Direction::Down => (),
         Direction::Right => g = rot90(&g),
         Direction::Left => g = rot90(&rot90(&rot90(&g))),
     }
+    match direction {
+        Direction::Up => l = rot90(&rot90(&l)),
+        Direction::Down => (),
+        Direction::Right => l = rot90(&l),
+        Direction::Left => l = rot90(&rot90(&rot90(&l))),
+    }
     // 2048 movement algorithm
     // compress-merge-compress
     // step 1. Compress. Move all non-empty cells in the direction of movement, filling in empty spaces. Start scanning in the opposite direction as the direction of movement.
 
     // lets just code this for downards movement and then rotate it after the fact for other directions.
+
+    // compress (down), skipping locked cells and never moving into locked positions
     for row in (0..g.len()).rev() {
         for col in 0..g[row].len() {
-            if g[row][col] != Cell::Empty {
+            if g[row][col] != Cell::Empty && !l[row][col] {
                 let mut new_row = row;
-                while new_row < g.len() - 1 && g[new_row + 1][col] == Cell::Empty {
+                while new_row < g.len() - 1 && g[new_row + 1][col] == Cell::Empty && !l[new_row + 1][col] {
                     new_row += 1;
                 }
                 if new_row != row {
                     g[new_row][col] = g[row][col];
+                    l[new_row][col] = l[row][col];
                     g[row][col] = Cell::Empty;
+                    l[row][col] = false;
                 }
             }
         }
     }
 
-    // step 2. Merge. If two adjacent cells in the direction of movement have the same value, merge them into one cell with the next level of value. Start scanning in the opposite direction as the direction of movement.
+    // merge (down): only merge if neither cell is locked
     for row in (0..g.len() - 1).rev() {
         for col in 0..g[row].len() {
-            if g[row][col] != Cell::Empty && g[row][col] == g[row + 1][col] {
+            if g[row][col] != Cell::Empty
+                && g[row][col] == g[row + 1][col]
+                && !l[row][col]
+                && !l[row + 1][col]
+            {
                 g[row + 1][col] = match g[row][col] {
                     Cell::InsufficientEvidence => Cell::EmergingUnderstanding,
                     Cell::EmergingUnderstanding => Cell::PartialMastery,
@@ -177,21 +210,24 @@ fn handle_input(grid: &Vec<Vec<Cell>>, direction: Direction) -> Vec<Vec<Cell>> {
                     _ => g[row][col],
                 };
                 g[row][col] = Cell::Empty;
+                l[row][col] = false;
             }
         }
     }
 
-    // step 3. compress, just paste the same code
+    // final compress (down), same rules as first compress
     for row in (0..g.len()).rev() {
         for col in 0..g[row].len() {
-            if g[row][col] != Cell::Empty {
+            if g[row][col] != Cell::Empty && !l[row][col] {
                 let mut new_row = row;
-                while new_row < g.len() - 1 && g[new_row + 1][col] == Cell::Empty {
+                while new_row < g.len() - 1 && g[new_row + 1][col] == Cell::Empty && !l[new_row + 1][col] {
                     new_row += 1;
                 }
                 if new_row != row {
                     g[new_row][col] = g[row][col];
+                    l[new_row][col] = l[row][col];
                     g[row][col] = Cell::Empty;
+                    l[row][col] = false;
                 }
             }
         }
@@ -248,12 +284,23 @@ fn check_goal(grid: &Vec<Vec<Cell>>, goal: &Vec<Cell>) -> i32 {
     -1
 }
 
+fn set_locked_bitmask(grid: &Vec<Vec<Cell>>, goal: &Vec<Cell>, locked: &mut Vec<Vec<bool>>) {
+    let i = grid.len() - 1;
+    for j in 0..grid[i].len() {
+        if grid[i][j] == goal[j] {
+            locked[i][j] = true;
+        }
+    }
+   
+}
+
 #[macroquad::main(window_conf)]
 async fn main() {
     srand(miniquad::date::now() as u64);
 
     let mut grid = vec![vec![Cell::Empty; GRID_SIZE]; GRID_SIZE];
-    let mut state = GameState::Playing;
+    let mut locked_bitmap: Vec<Vec<bool>> = vec![vec![false; GRID_SIZE]; GRID_SIZE];
+    let mut state = GameState::Start;
 
     grid = spawn_new(&grid);
 
@@ -266,51 +313,90 @@ async fn main() {
 
     let mut score = 0;
 
+    let mut restarts_left = 4;
+
+    let timer_max = 120.0;
+
+    let mut timer = Instant::now();
+
+
     loop {
         counter += 1;
         clear_background(BLACK);
 
-        draw_grid(&grid);
+        draw_grid(&grid, &locked_bitmap);
+        if state == GameState::Start {
+            draw_text("Dan rubric 2048", OFFSET.0, OFFSET.1 - 50.0, 30.0, WHITE);
+            draw_text("Press Space to Start", OFFSET.0, OFFSET.1 - 20.0, 20.0, WHITE);
+            if is_key_pressed(KeyCode::Space) {
+                timer = Instant::now();
+                state = GameState::Playing;
+            }
+        }else if state == GameState::Lost {
+            draw_text("Game Over!", OFFSET.0, OFFSET.1 - 50.0, 30.0, WHITE);
+            draw_text(&format!("Final Score: {}; Press Space to Restart", score), OFFSET.0, OFFSET.1 - 20.0, 20.0, WHITE);
+            if is_key_pressed(KeyCode::Space) {
+                timer = Instant::now();
+                state = GameState::Playing;
+                score = 0;
+                restarts_left = 4;
+                goal = get_new_goal();
+                grid = vec![vec![Cell::Empty; GRID_SIZE]; GRID_SIZE];
+                grid = spawn_new(&grid);
+            }
+            
+        }
         if state == GameState::Playing || state == GameState::GoalReached {
             
             for i in 0..goal.len() {
                 let x = i as f32 * CELL_SIZE/2.0 + OFFSET.0 + 80.0;
                 let y = OFFSET.1 - 20.0 - CELL_SIZE/2.0;
                 match goal[i] {
-                    Cell::Empty => draw_cell(x, y, CELL_SIZE/2.0, CELL_SIZE/2.0, 10.0, GRAY, None),
+                    Cell::Empty => draw_cell(x, y, CELL_SIZE/2.0, CELL_SIZE/2.0, 10.0, GRAY, None, false),
                     Cell::InsufficientEvidence => {
-                        draw_cell(x, y, CELL_SIZE/2.0, CELL_SIZE/2.0, 10.0, ORANGE, Some("IE"))
+                        draw_cell(x, y, CELL_SIZE/2.0, CELL_SIZE/2.0, 10.0, ORANGE, Some("IE"), false)
                     }
                     Cell::EmergingUnderstanding => {
-                        draw_cell(x, y, CELL_SIZE/2.0, CELL_SIZE/2.0, 10.0, YELLOW, Some("EU"))
+                        draw_cell(x, y, CELL_SIZE/2.0, CELL_SIZE/2.0, 10.0, YELLOW, Some("EU"), false)
                     }
                     Cell::PartialMastery => {
-                        draw_cell(x, y, CELL_SIZE/2.0, CELL_SIZE/2.0, 10.0, LIME, Some("PM"))
+                        draw_cell(x, y, CELL_SIZE/2.0, CELL_SIZE/2.0, 10.0, LIME, Some("PM"), false)
                     }
-                    Cell::Mastery => draw_cell(x, y, CELL_SIZE/2.0, CELL_SIZE/2.0, 10.0, GREEN, Some("M")),
+                    Cell::Mastery => draw_cell(x, y, CELL_SIZE/2.0, CELL_SIZE/2.0, 10.0, GREEN, Some("M"), false),
                 }
             }
             draw_text("Goal:", OFFSET.0, OFFSET.1 - 50.0, 30.0, WHITE);
 
+            draw_text("(bottom row)", OFFSET.0, OFFSET.1 - 30.0, 15.0, WHITE);
+
+
             draw_text(&format!("Evals graded: {}", score), OFFSET.0, OFFSET.1 + CELL_SIZE * GRID_SIZE as f32 + 40.0, 20.0, WHITE);
 
             draw_text("Arrows to move. Try to reach the goal! Space to skip.", OFFSET.0, OFFSET.1 + CELL_SIZE * GRID_SIZE as f32 + 20.0, 20.0, WHITE);
+            draw_text(&format!("Restarts left: {}", restarts_left), OFFSET.0, OFFSET.1 + CELL_SIZE * GRID_SIZE as f32 + 60.0, 20.0, WHITE);
+            draw_text(&format!("Time left: {:.1}s", timer_max - timer.elapsed().as_secs_f32()), OFFSET.0 + 200.0, OFFSET.1 + CELL_SIZE * GRID_SIZE as f32 + 60.0, 20.0, WHITE);
 
         }
         if state == GameState::Playing {
             
             
             if let Some(direction) = get_input() {
-                grid = handle_input(&grid, direction);
+                grid = handle_input(&grid, direction, &locked_bitmap);
                 grid = spawn_new(&grid);
+            }
+
+            if timer.elapsed().as_secs_f32() >= timer_max {
+                state = GameState::Lost;
             }
         }
 
         let goal_res = check_goal(&grid, &goal);
+        set_locked_bitmask(&grid, &goal, &mut locked_bitmap);
         if goal_res != -1 {
             state = GameState::GoalReached;
             if prev_state != state {
                 score += 1;
+                restarts_left += 3;
             }
 
             draw_rectangle_lines(
@@ -328,12 +414,26 @@ async fn main() {
             counter = 0;
             prev_state = state.clone();
         }
+        if (is_key_pressed(KeyCode::Space)) {
+            if state == GameState::Playing && restarts_left > 0 {
+                restarts_left -= 1;
+                goal = get_new_goal();
+                grid = vec![vec![Cell::Empty; GRID_SIZE]; GRID_SIZE];
+                grid = spawn_new(&grid);
+                locked_bitmap = vec![vec![false; GRID_SIZE]; GRID_SIZE];
+            }
+        }
 
-        if state == GameState::GoalReached && counter > (macroquad::time::get_fps() as i32 * 2.0 as i32) as usize || is_key_pressed(KeyCode::Space) {
+        if restarts_left == 0 && state == GameState::Playing {
+            state = GameState::Lost;
+        }
+
+        if state == GameState::GoalReached && counter > (macroquad::time::get_fps() as i32 * 2.0 as i32) as usize{
             goal = get_new_goal();
             state = GameState::Playing;
             grid = vec![vec![Cell::Empty; GRID_SIZE]; GRID_SIZE];
             grid = spawn_new(&grid);
+            locked_bitmap = vec![vec![false; GRID_SIZE]; GRID_SIZE];
         }
 
         next_frame().await;

@@ -32,6 +32,25 @@
         transform: translate(-50%, -50%);
       }
     </style>
+    <script>
+      let started = false;
+      const audio = new Audio('theme.mp3');
+
+      audio.loop = true;
+
+      function startTheme() {
+        if (started) return;
+        started = true;
+
+        audio.play().catch(err => {
+          console.error('Audio playback failed:', err);
+        });
+
+        window.removeEventListener('keydown', startTheme);
+      }
+
+      window.addEventListener('keydown', startTheme);
+    </script>
   </head>
   <body>
     <canvas id="glcanvas" tabindex="1"></canvas>

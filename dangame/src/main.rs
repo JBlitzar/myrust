@@ -268,18 +268,18 @@ fn get_new_goal() -> Vec<Cell> {
 }
 
 fn check_goal(grid: &Vec<Vec<Cell>>, goal: &Vec<Cell>) -> i32 {
-    for i in 0..grid.len() {
-        let mut flag = true;
-        for j in 0..grid[i].len() {
-            if grid[i][j] != goal[j] {
-                flag = false;
-                break;
-            }
-        }
-        if flag {
-            return i as i32;
+    let i = grid.len() - 1;
+    let mut flag = true;
+    for j in 0..grid[i].len() {
+        if grid[i][j] != goal[j] {
+            flag = false;
+            break;
         }
     }
+    if flag {
+        return i as i32;
+    }
+    
     -1
 }
 

@@ -326,6 +326,7 @@ async fn main() {
             if is_key_pressed(KeyCode::Space) {
                 timer_start = get_time();
                 state = GameState::Playing;
+                score = 0;
             }
         } else if state == GameState::Lost {
             draw_text("Game Over!", OFFSET.0, OFFSET.1 - 50.0, 30.0, WHITE);

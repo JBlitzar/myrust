@@ -6,7 +6,9 @@
 
 ### How does it work?
 
-The Miller Rabin Primality test is a randomized algorithm to determine if a number is prime. There exist polynomial-time solutions, but this one is incredibly fast. Miller Rabin is used in modern production crypto systems _today_. This is because RSA, ECDH, DHKE, etc all rely on generating large prime numbers incredibly fast. Once you have two, you get a one-way function: It's easy to multiply two prime numbers to get a larger composite number, but much harder to factor that composite number (without Shor's algorithm).
+The Miller Rabin Primality test is a randomized algorithm to determine if a number is prime. There exist polynomial-time solutions, but this one is incredibly fast. Miller Rabin is used in modern production crypto systems _today_. This is because RSA, ECDH, DHKE, etc all rely on generating large prime numbers incredibly fast. Once you have two, you get a one-way function: It's easy to multiply two prime numbers to get a larger composite number, but much harder to factor that composite number [^1]
+
+[^1]: \*Without Shor's algorithm
 
 You can generate a 256-bit prime number as such:
 
@@ -33,7 +35,7 @@ The exhaustive version is to check all $x$ es, and the probabilistic one is to o
 
 Unfortuantely, Carmichael numbers are an issue. They pass the Fermat Primality test but are composite. Remember, our statement of FLT is true, but the reverse is not necesarily true: There are some numbers (Carmichael numbers) that satisfy $x^{n-1} \equiv 1 (\text{mod} n) \forall x \in \mathbb{Z}, 0<x<n$. The Cornell pdf linked has number-theoretic justification for this, but the short version is that there are "Fermat Witnesses" and "Fermat Liars," and all of the trials that you run on Carmichael numbers are Fermat Liars. Carmichael numbers _do_ thin out as the magnitudes involved increase, but it's still no fun to have deterministic correctness problems with your primality tester.
 
-The algorithm for Miller Rabin is similar to that of the Fermat Prime test, but instead of finding Fermat Witnesses, it finds "fake square roots." That is, a number $x \neq \pm 1 (\text{mod} n)$ where $x^2 \equiv 1 (\text{mod} n)$. If such a number $x$ exists, then the number is composite.
+The algorithm for Miller Rabin is similar to that of the Fermat Prime test, but instead of finding Fermat Witnesses to prove stuff, it finds "fake square roots." That is, a number $x \neq \pm 1 (\text{mod} n)$ where $x^2 \equiv 1 (\text{mod} n)$. If such a number $x$ exists, then the number is composite.
 
 This works because that would mean that $n$ divides $x^2-1=(x+1)(x-1)$. To satisfy that and $x \neq \pm 1 (\text{mod} n)$, $n$ must be composite. See Lemma 10 in the cornell pdf linked if you have more questions about this.
 
@@ -46,13 +48,15 @@ Miller Rabin works as follows:
   - This can loop at most k times, so this is $O(log(n)log(n))$
 - Otherwise, it's probably prime.
 
-Thus, Miller Rabin has an $O(klog(n)log(n))$[^1] time complexity as a whole. See footnote for more info.
+Thus, Miller Rabin has an $O(klog(n)log(n))$[^2] time complexity as a whole. See footnote for more info.
 
-[^1]: A time when you can't just treat arithmetic as O(1). Modular expo starts seeming super incompatible practically for numerical precision and bits required. What's cool is that you can compute $x^{2^i t} \text{mod} n$ without computing the big result in the middle. You basically use something akin to fast exponentiation (yay FSMs!) but with a modular step in between to achieve this in $O(log(2^i t))=O(i)$, so the whole thing is actually $O(klog(n)log(n))$. Of course, multiplication is also not truly free. The advanced version of fast modular exponentiation involves this crazy thing called montgomery multiplication, where you can get slightly faster pseudopolynomial constants. I chose not to implement it for implementation complexity reasons, but it's something worth checking out if you're interested. Anyways, it's polynomial in $log(n)$ and multiplied by $k$. So it's very fast.
+[^2]: A time when you can't just treat arithmetic as O(1). Modular expo starts seeming super incompatible practically for numerical precision and bits required. What's cool is that you can compute $x^{2^i t} \text{mod} n$ without computing the big result in the middle. You basically use something akin to fast exponentiation (yay FSMs!) but with a modular step in between to achieve this in $O(log(2^i t))=O(i)$, so the whole thing is actually $O(klog(n)log(n))$. Of course, multiplication is also not truly free. The advanced version of fast modular exponentiation involves this crazy thing called montgomery multiplication, where you can get slightly faster pseudopolynomial constants. I chose not to implement it for implementation complexity reasons, but it's something worth checking out if you're interested. Anyways, it's polynomial in $log(n)$ and multiplied by $k$. So it's very fast.
 
 Each round has a $\frac{1}{4}$ probability of returning a false positive result (see the ScienceDirect resource, or the "Accuracy" section of the wikipedia article). Since we can run arbitrarily many independent rounds, the probability of false positives as a whole drops to zero at a rate of $4^{-k}$.
 
-One consideration is that we're going to run this several times, so we have to be careful with our confidence (see https://xkcd.com/882/ ). In the end, $4^{-k}$ is quite fast. Modern production systems use forty rounds. I've found that using just ten rounds is fine. $4^{-10}$ is a very small number and $4^{-40}$ even smaller. If you ran forty-round Miller Rabin every millisecond, it would take 38 trillion years on average to get a false positive. For context, the universe is only 14 billion or so years old. Even just ten rounds gets you a million primes generated before you get a false positive.
+One consideration is that we're going to run this several times, so we have to be careful with our confidence[^3]. In the end, $4^{-k}$ is quite fast. Modern production systems use forty rounds. I've found that using just ten rounds is fine. $4^{-10}$ is a very small number and $4^{-40}$ even smaller. If you ran forty-round Miller Rabin every millisecond, it would take 38 trillion years on average to get a false positive. For context, the universe is only 14 billion or so years old. Even just ten rounds gets you a million primes generated before you get a false positive.
+
+[^3]: https://xkcd.com/882/
 
 ### Implementation
 

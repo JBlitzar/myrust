@@ -20,34 +20,34 @@ So how do we arrive at the algorithm described on the cover image?
 
 The first thing you might think of is just guessing factors or using something like the Sieve of Eratosthenes. This works, but it's $O(\sqrt{n})$. This is usually very good, but in this case, with $n$ being $2^256$, we'll need something in $\log n$ time. 
 
-It starts with Fermat's Little Theorem. It states that a number is prime iff $$x^{n-1} \equiv 1 (\operatorname{mod} n) \forall x \in \mathbb{Z}, 0<x<n$$. Proofs for this can be found online for those who are interested. It's a bit out-of-scope for this writeup, since FLT's more number theory and less algorithms
+It starts with Fermat's Little Theorem. It states that a number is prime iff $$x^{n-1} \equiv 1 (\text{mod} n) \forall x \in \mathbb{Z}, 0<x<n$$. Proofs for this can be found online for those who are interested. It's a bit out-of-scope for this writeup, since FLT's more number theory and less algorithms
 
 The Fermat primality test goes something like this:
  - Choose a random $x$ in $(1,n)$
- - Check if it fails: if $x^{n-1} \equiv 0 (\operatorname{mod} n)$, then return "definitely composite"
+ - Check if it fails: if $x^{n-1} \equiv 0 (\text{mod} n)$, then return "definitely composite"
  - Repeat for as many random $x$es as you'd like
  - Otherwise, it's probably prime. 
 
 The deterministic version is to check all $x$es, and the probabilistic one is to only check some. This is the key idea in randomized algorithms: Trading correctness for speed. Luckily, with Miller Rabin, we'll be able to be very confident in correctness. 
 
-Unfortuantely, Carmichael numbers are an issue. They pass the Fermat Primality test but are composite. Remember, our statement of FLT is true, but the reverse is not necesarily true: There are some numbers (Carmichael numbers) that satisfy $x^{n-1} \equiv 1 (\operatorname{mod} n) \forall x \in \mathbb{Z}, 0<x<n$. The Cornell pdf linked has number-theoretic justification for this, but the short version is that there are "Fermat Witnesses" and "Fermat Liars," and all of the factors of Carmichael numbers are Fermat Liars. 
+Unfortuantely, Carmichael numbers are an issue. They pass the Fermat Primality test but are composite. Remember, our statement of FLT is true, but the reverse is not necesarily true: There are some numbers (Carmichael numbers) that satisfy $x^{n-1} \equiv 1 (\text{mod} n) \forall x \in \mathbb{Z}, 0<x<n$. The Cornell pdf linked has number-theoretic justification for this, but the short version is that there are "Fermat Witnesses" and "Fermat Liars," and all of the factors of Carmichael numbers are Fermat Liars. 
 
-The algorithm for Miller Rabin is similar to that of the Fermat Prime test, but instead of finding Fermat Witnesses, it finds "fake square roots." That is, a number $x \neq \pm 1 (\operatorname{mod} n)$ where $x^2 \equiv 1 (\operatorname{mod} n)$. If such a number $x$ exists, then the number is composite. 
+The algorithm for Miller Rabin is similar to that of the Fermat Prime test, but instead of finding Fermat Witnesses, it finds "fake square roots." That is, a number $x \neq \pm 1 (\text{mod} n)$ where $x^2 \equiv 1 (\text{mod} n)$. If such a number $x$ exists, then the number is composite. 
 
-This works because that would mean that $n$ divides $x^2-1=(x+1)(x-1)$. To satisfy that and  $x \neq \pm 1 (\operatorname{mod} n)$, $x$ must be prime. 
+This works because that would mean that $n$ divides $x^2-1=(x+1)(x-1)$. To satisfy that and  $x \neq \pm 1 (\text{mod} n)$, $x$ must be prime. 
 
 Miller Rabin works as follows:
 
  - Decompose $n-1$ into $2^k \cdot m$ (takes at most $O(log(n))$ time)
  - Repeat for however many rounds you want to test:
     - Choose a random $x$ from $1$ to $n-1$
-    - compute $b_i=x^{2^i t} \operatorname{mod} n$. If it's one mod n and $b_i-1$'s not, return composite. THis is from the fake square root theorem
+    - compute $b_i=x^{2^i t} \text{mod} n$. If it's one mod n and $b_i-1$'s not, return composite. THis is from the fake square root theorem
     - This can loop at most k times, so this is  $O(log(n))$
  - Otherwise, it's probably prime.
 
 Thus, Miller Rabin has an $O(klog(n)log(n))$[^1] time complexity as a whole. See footnote for why 
 
-[^1]: Actually, modular exponentiation is not free. What's cool is that you can compute $x^{2^i t} \operatorname{mod} n$ without computing the big result in the middle. You basically use something akin to fast exponentiation (but with a modular step in between) to achieve this in $O(log(2^i t))=O(i)$, so the whole thing is actually $O(klog(n)log(n))$
+[^1]: Actually, modular exponentiation is not free. What's cool is that you can compute $x^{2^i t} \text{mod} n$ without computing the big result in the middle. You basically use something akin to fast exponentiation (but with a modular step in between) to achieve this in $O(log(2^i t))=O(i)$, so the whole thing is actually $O(klog(n)log(n))$
 
 
 Each round has a $\frac{1}{4}$ probability of returning a false positive result (see the ScienceDirect resource, or the "Accuracy" section of the wikipedia article). Since we can run arbitrarily many independent rounds, the probability of false positives as a whole drops to zero. 

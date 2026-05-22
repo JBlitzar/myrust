@@ -60,6 +60,8 @@ I used fixed-width calculations for speed as opposed to variable-width bigints. 
 
 All in all, I've optimized it down to just `2ms` per prime! I benchmark with `criterion`.
 
+Real statistics: `time:   [2.0984 ms, 2.2116 ms] -> 2.1548 ms`
+
 ### Running
 
 I might provide release binaries at a later date. 

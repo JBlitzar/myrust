@@ -47,18 +47,27 @@ Miller Rabin works as follows:
 
 Thus, Miller Rabin has an $O(klog(n)log(n))$[^1] time complexity as a whole. See footnote for why 
 
-[^1]: Actually, modular exponentiation is not free. What's cool is that you can compute $x^{2^i t} \text{mod} n$ without computing the big result in the middle. You basically use something akin to fast exponentiation (but with a modular step in between) to achieve this in $O(log(2^i t))=O(i)$, so the whole thing is actually $O(klog(n)log(n))$
+[^1]: Actually, modular exponentiation is not free. What's cool is that you can compute $x^{2^i t} \text{mod} n$ without computing the big result in the middle. You basically use something akin to fast exponentiation (yay FSMs!) but with a modular step in between to achieve this in $O(log(2^i t))=O(i)$, so the whole thing is actually $O(klog(n)log(n))$. The advanced version of fast modular exponentiation involves this crazy thing called montgomery multiplication, where you can get slightly faster pseudopolynomial constants. I chose not to implement it for implementation complexity reasons, but it's something worth checking out if you're interested
 
 
-Each round has a $\frac{1}{4}$ probability of returning a false positive result (see the ScienceDirect resource, or the "Accuracy" section of the wikipedia article). Since we can run arbitrarily many independent rounds, the probability of false positives as a whole drops to zero. 
+Each round has a $\frac{1}{4}$ probability of returning a false positive result (see the ScienceDirect resource, or the "Accuracy" section of the wikipedia article). Since we can run arbitrarily many independent rounds, the probability of false positives as a whole drops to zero at a rate of $4^{-k}$. 
 
+One consideration is that we're going to run this several times, so we have to be careful with our confidence (see https://xkcd.com/882/). In the end, $4^{-k}$ is quite fast. Modern production systems use forty rounds. I've found that using just ten rounds is fine. 
 
+### Implementation
 
+I used fixed-width calculations for speed as opposed to variable-width bigints. While I had some initial overflow troubles, it now works. I dropped the rounds down to ten, and also did some easy optimizations (only generate odd candidates using `n | 1`, run through a tiny sieve to eliminate easy composites). I use fastrand for the $x$ selection, and a cryptographically secure ChaCha20 that is seeded from the os entropy source. 
 
+All in all, I've optimized it down to just `2ms` per prime! I benchmark with `criterion`.
 
+### Running
 
+I might provide release binaries at a later date. 
 
+`cargo run --release` after `git clone`ing and `cd`ing in.
+`cargo bench` to run benchmarks
 
+Use the calculatorsoup link to verify generated primes
 
 
 ### Resources

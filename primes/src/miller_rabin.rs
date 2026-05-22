@@ -10,7 +10,7 @@ use rand_chacha::ChaCha20Rng;
 fn pow(mut x: U512, mut n: U512, m: U512) -> U512 {
     // I got AI to refactor my fast modular expo function because I had integer overflowing problems. It's also slightly more optimized because it uses bit level hacking instead of recursion
     // a truly optimized version of this would use montgomery multiplication. honestly out of scope for me for now
-    
+
     let mut res = U512::from(1);
     x = x % m;
 
@@ -25,6 +25,14 @@ fn pow(mut x: U512, mut n: U512, m: U512) -> U512 {
 }
 
 pub fn check(n: U512, rounds: usize) -> bool {
+
+    if n == U512::from(2) || n == U512::from(3) {
+        return true;
+    }
+    if n <= U512::from(1){
+        return false;
+    }
+
     const SMALL_PRIMES: [u64; 11] = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31];
     for p in SMALL_PRIMES {
         if n % p == U512::from(0) {
@@ -33,12 +41,7 @@ pub fn check(n: U512, rounds: usize) -> bool {
     }
 
     // println!("Checking {}", n);
-    if n == U512::from(2) || n == U512::from(3) {
-        return true;
-    }
-    if n <= U512::from(1){
-        return false;
-    }
+   
 
     let mut cur = n - 1;
     let mut q: usize = 0;
@@ -90,8 +93,9 @@ pub fn check(n: U512, rounds: usize) -> bool {
 
 pub fn get_prime() -> U512 {
     let mut i = 0;
+    let mut rng = ChaCha20Rng::from_rng(&mut rng());
+
     loop {
-        let mut rng = ChaCha20Rng::from_rng(&mut rng());
         let p = csprng_u256(&mut rng) | U512::from(1) | (U512::from(1) << 255);
         if check(p, 10) {
             return p;

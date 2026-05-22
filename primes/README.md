@@ -34,7 +34,7 @@ Unfortuantely, Carmichael numbers are an issue. They pass the Fermat Primality t
 
 The algorithm for Miller Rabin is similar to that of the Fermat Prime test, but instead of finding Fermat Witnesses, it finds "fake square roots." That is, a number $x \neq \pm 1 (\text{mod} n)$ where $x^2 \equiv 1 (\text{mod} n)$. If such a number $x$ exists, then the number is composite. 
 
-This works because that would mean that $n$ divides $x^2-1=(x+1)(x-1)$. To satisfy that and  $x \neq \pm 1 (\text{mod} n)$, $n$ must be composite. 
+This works because that would mean that $n$ divides $x^2-1=(x+1)(x-1)$. To satisfy that and  $x \neq \pm 1 (\text{mod} n)$, $n$ must be composite. See Lemma 10 in the cornell pdf linked if you have more questions about this. 
 
 Miller Rabin works as follows:
 

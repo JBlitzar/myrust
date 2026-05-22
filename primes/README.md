@@ -28,7 +28,7 @@ The Fermat primality test goes something like this:
  - Repeat for as many random $x$es as you'd like
  - Otherwise, it's probably prime. 
 
-The deterministic version is to check all $x$es, and the probabilistic one is to only check some. This is the key idea in randomized algorithms: Trading correctness for speed. Luckily, with Miller Rabin, we'll be able to be very confident in correctness. 
+The deterministic version is to check all $x$ es, and the probabilistic one is to only check some. This is the key idea in randomized algorithms: Trading correctness for speed. Luckily, with Miller Rabin, we'll be able to be very confident in correctness. 
 
 Unfortuantely, Carmichael numbers are an issue. They pass the Fermat Primality test but are composite. Remember, our statement of FLT is true, but the reverse is not necesarily true: There are some numbers (Carmichael numbers) that satisfy $x^{n-1} \equiv 1 (\text{mod} n) \forall x \in \mathbb{Z}, 0<x<n$. The Cornell pdf linked has number-theoretic justification for this, but the short version is that there are "Fermat Witnesses" and "Fermat Liars," and all of the factors of Carmichael numbers are Fermat Liars. 
 
@@ -41,13 +41,13 @@ Miller Rabin works as follows:
  - Decompose $n-1$ into $2^k \cdot m$ (takes at most $O(log(n))$ time)
  - Repeat for however many rounds you want to test:
     - Choose a random $x$ from $1$ to $n-1$
-    - compute $b_i=x^{2^i t} \text{mod} n$. If it's one mod n and $b_i-1$'s not, return composite. THis is from the fake square root theorem
-    - This can loop at most k times, so this is  $O(log(n))$
+    - compute $b_i=x^{2^i t} \text{mod} n$. If it's one mod n and $b_i-1$'s not, return composite. THis is from the fake square root theorem. This takes $O(log(n))$ (see footnote)
+    - This can loop at most k times, so this is  $O(log(n)log(n))$
  - Otherwise, it's probably prime.
 
 Thus, Miller Rabin has an $O(klog(n)log(n))$[^1] time complexity as a whole. See footnote for why 
 
-[^1]: Actually, modular exponentiation is not free. What's cool is that you can compute $x^{2^i t} \text{mod} n$ without computing the big result in the middle. You basically use something akin to fast exponentiation (yay FSMs!) but with a modular step in between to achieve this in $O(log(2^i t))=O(i)$, so the whole thing is actually $O(klog(n)log(n))$. The advanced version of fast modular exponentiation involves this crazy thing called montgomery multiplication, where you can get slightly faster pseudopolynomial constants. I chose not to implement it for implementation complexity reasons, but it's something worth checking out if you're interested
+[^1]: A time when you can't just treat arithmetic as O(1). Modular expo starts seeming super incompatible practically for numerical precision and bits required.  What's cool is that you can compute $x^{2^i t} \text{mod} n$ without computing the big result in the middle. You basically use something akin to fast exponentiation (yay FSMs!) but with a modular step in between to achieve this in $O(log(2^i t))=O(i)$, so the whole thing is actually $O(klog(n)log(n))$. The advanced version of fast modular exponentiation involves this crazy thing called montgomery multiplication, where you can get slightly faster pseudopolynomial constants. I chose not to implement it for implementation complexity reasons, but it's something worth checking out if you're interested
 
 
 Each round has a $\frac{1}{4}$ probability of returning a false positive result (see the ScienceDirect resource, or the "Accuracy" section of the wikipedia article). Since we can run arbitrarily many independent rounds, the probability of false positives as a whole drops to zero at a rate of $4^{-k}$. 

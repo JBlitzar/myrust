@@ -20,11 +20,11 @@ So how do we arrive at the algorithm described on the cover image?
 
 The first thing you might think of is just guessing factors or using something like the Sieve of Eratosthenes. This works, but it's $O(\sqrt{n})$. This is usually very good, but in this case, with $n$ being $2^256$, we'll need something in $\log n$ time. 
 
-It starts with Fermat's Little Theorem. It states that a number is prime iff $$x^{n-1} \equiv 1 (\text{mod} n) \forall x \in \mathbb{Z}, 0<x<n$$. Proofs for this can be found online for those who are interested. It's a bit out-of-scope for this writeup, since FLT's more number theory and less algorithms
+It starts with Fermat's Little Theorem. It states that a if number is prime, $$x^{n-1} \equiv 1 (\text{mod} n) \forall x \in \mathbb{Z}, 0<x<n$$. Proofs for this can be found online for those who are interested. It's a bit out-of-scope for this writeup, since FLT's more number theory and less algorithms
 
 The Fermat primality test goes something like this:
  - Choose a random $x$ in $(1,n)$
- - Check if it fails: if $x^{n-1} \equiv 0 (\text{mod} n)$, then return "definitely composite"
+ - Check if it fails: if $x^{n-1} \neq 1 (\text{mod} n)$, then return "definitely composite"
  - Repeat for as many random $x$es as you'd like
  - Otherwise, it's probably prime. 
 
@@ -34,20 +34,20 @@ Unfortuantely, Carmichael numbers are an issue. They pass the Fermat Primality t
 
 The algorithm for Miller Rabin is similar to that of the Fermat Prime test, but instead of finding Fermat Witnesses, it finds "fake square roots." That is, a number $x \neq \pm 1 (\text{mod} n)$ where $x^2 \equiv 1 (\text{mod} n)$. If such a number $x$ exists, then the number is composite. 
 
-This works because that would mean that $n$ divides $x^2-1=(x+1)(x-1)$. To satisfy that and  $x \neq \pm 1 (\text{mod} n)$, $x$ must be prime. 
+This works because that would mean that $n$ divides $x^2-1=(x+1)(x-1)$. To satisfy that and  $x \neq \pm 1 (\text{mod} n)$, $n$ must be composite. 
 
 Miller Rabin works as follows:
 
  - Decompose $n-1$ into $2^k \cdot m$ (takes at most $O(log(n))$ time)
  - Repeat for however many rounds you want to test:
     - Choose a random $x$ from $1$ to $n-1$
-    - compute $b_i=x^{2^i t} \text{mod} n$. If it's one mod n and $b_i-1$'s not, return composite. THis is from the fake square root theorem. This takes $O(log(n))$ (see footnote)
+    - compute $b_i=x^{2^i m} \text{mod} n$. If it's one mod n and $b_i-1$'s not, return composite. THis is from the fake square root theorem. This takes $O(log(n))$ (see footnote)
     - This can loop at most k times, so this is  $O(log(n)log(n))$
  - Otherwise, it's probably prime.
 
-Thus, Miller Rabin has an $O(klog(n)log(n))$[^1] time complexity as a whole. See footnote for why 
+Thus, Miller Rabin has an $O(klog(n)log(n))$[^1] time complexity as a whole. See footnote for more info. 
 
-[^1]: A time when you can't just treat arithmetic as O(1). Modular expo starts seeming super incompatible practically for numerical precision and bits required.  What's cool is that you can compute $x^{2^i t} \text{mod} n$ without computing the big result in the middle. You basically use something akin to fast exponentiation (yay FSMs!) but with a modular step in between to achieve this in $O(log(2^i t))=O(i)$, so the whole thing is actually $O(klog(n)log(n))$. The advanced version of fast modular exponentiation involves this crazy thing called montgomery multiplication, where you can get slightly faster pseudopolynomial constants. I chose not to implement it for implementation complexity reasons, but it's something worth checking out if you're interested
+[^1]: A time when you can't just treat arithmetic as O(1). Modular expo starts seeming super incompatible practically for numerical precision and bits required.  What's cool is that you can compute $x^{2^i t} \text{mod} n$ without computing the big result in the middle. You basically use something akin to fast exponentiation (yay FSMs!) but with a modular step in between to achieve this in $O(log(2^i t))=O(i)$, so the whole thing is actually $O(klog(n)log(n))$. Of course, multiplication is also not truly free. The advanced version of fast modular exponentiation involves this crazy thing called montgomery multiplication, where you can get slightly faster pseudopolynomial constants. I chose not to implement it for implementation complexity reasons, but it's something worth checking out if you're interested. Anyways, it's polynomial in $log(n)$ and multiplied by $k$. So it's very fast.
 
 
 Each round has a $\frac{1}{4}$ probability of returning a false positive result (see the ScienceDirect resource, or the "Accuracy" section of the wikipedia article). Since we can run arbitrarily many independent rounds, the probability of false positives as a whole drops to zero at a rate of $4^{-k}$. 

@@ -28,9 +28,9 @@ The Fermat primality test goes something like this:
  - Repeat for as many random $x$es as you'd like
  - Otherwise, it's probably prime. 
 
-The deterministic version is to check all $x$ es, and the probabilistic one is to only check some. This is the key idea in randomized algorithms: Trading correctness for speed. Luckily, with Miller Rabin, we'll be able to be very confident in correctness. 
+The exhaustive version is to check all $x$ es, and the probabilistic one is to only check some. This is the key idea in randomized algorithms: Trading correctness for speed. Luckily, with Miller Rabin, we'll be able to be very confident in correctness. 
 
-Unfortuantely, Carmichael numbers are an issue. They pass the Fermat Primality test but are composite. Remember, our statement of FLT is true, but the reverse is not necesarily true: There are some numbers (Carmichael numbers) that satisfy $x^{n-1} \equiv 1 (\text{mod} n) \forall x \in \mathbb{Z}, 0<x<n$. The Cornell pdf linked has number-theoretic justification for this, but the short version is that there are "Fermat Witnesses" and "Fermat Liars," and all of the factors of Carmichael numbers are Fermat Liars. 
+Unfortuantely, Carmichael numbers are an issue. They pass the Fermat Primality test but are composite. Remember, our statement of FLT is true, but the reverse is not necesarily true: There are some numbers (Carmichael numbers) that satisfy $x^{n-1} \equiv 1 (\text{mod} n) \forall x \in \mathbb{Z}, 0<x<n$. The Cornell pdf linked has number-theoretic justification for this, but the short version is that there are "Fermat Witnesses" and "Fermat Liars," and all of the trials that you run on Carmichael numbers are Fermat Liars. Carmichael numbers *do* thin out as the magnitudes involved increase, but it's still no fun to have deterministic correctness problems with your primality tester.
 
 The algorithm for Miller Rabin is similar to that of the Fermat Prime test, but instead of finding Fermat Witnesses, it finds "fake square roots." That is, a number $x \neq \pm 1 (\text{mod} n)$ where $x^2 \equiv 1 (\text{mod} n)$. If such a number $x$ exists, then the number is composite. 
 
@@ -52,7 +52,7 @@ Thus, Miller Rabin has an $O(klog(n)log(n))$[^1] time complexity as a whole. See
 
 Each round has a $\frac{1}{4}$ probability of returning a false positive result (see the ScienceDirect resource, or the "Accuracy" section of the wikipedia article). Since we can run arbitrarily many independent rounds, the probability of false positives as a whole drops to zero at a rate of $4^{-k}$. 
 
-One consideration is that we're going to run this several times, so we have to be careful with our confidence (see https://xkcd.com/882/). In the end, $4^{-k}$ is quite fast. Modern production systems use forty rounds. I've found that using just ten rounds is fine. 
+One consideration is that we're going to run this several times, so we have to be careful with our confidence (see https://xkcd.com/882/ ). In the end, $4^{-k}$ is quite fast. Modern production systems use forty rounds. I've found that using just ten rounds is fine. $4^{-10}$ is a very small number and $4^{-40}$ even smaller. If you ran forty-round Miller Rabin every millisecond, it would take 38 trillion years on average to get a false positive. For context, the universe is only 14 billion or so years old. Even just ten rounds gets you a million primes generated before you get a false positive. 
 
 ### Implementation
 

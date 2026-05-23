@@ -20,7 +20,7 @@ For 256-bit primes, the PMT estimates a density of about $$\frac{1}{\ln\left(2^{
 
 So how do we arrive at the algorithm described on the cover image?
 
-The first thing you might think of is just guessing factors or using something like the Sieve of Eratosthenes. This works, but it's $O(\sqrt{n})$. This is usually very good, but in this case, with $n$ being $2^256$, we'll need something in $\log n$ time.
+The first thing you might think of is just guessing factors or using something like the Sieve of Eratosthenes. This works, but it's $$O(\sqrt{n})$$. This is usually very good, but in this case, with $n$ being $2^{256}$, we'll need something faster, like polynomial time in $\log n$.
 
 It starts with Fermat's Little Theorem. It states that a if number is prime, $$x^{n-1} \equiv 1 (\text{mod} n) \forall x \in \mathbb{Z}, 0<x<n$$. Proofs for this can be found online for those who are interested. It's a bit out-of-scope for this writeup, since FLT's more number theory and less algorithms
 
@@ -28,7 +28,7 @@ The Fermat primality test goes something like this:
 
 - Choose a random $x$ in $(1,n)$
 - Check if it fails: if $x^{n-1} \neq 1 (\text{mod} n)$, then return "definitely composite"
-- Repeat for as many random $x$es as you'd like
+- Repeat for as many random $x$ es as you'd like
 - Otherwise, it's probably prime.
 
 The exhaustive version is to check all $x$ es, and the probabilistic one is to only check some. This is the key idea in randomized algorithms: Trading correctness for speed. Luckily, with Miller Rabin, we'll be able to be very confident in correctness.

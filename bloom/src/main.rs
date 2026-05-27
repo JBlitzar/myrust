@@ -1,38 +1,11 @@
 use std::hash::DefaultHasher;
 use fastrand::Rng;
-
-
-struct Xorshift32 {
-    state: u32,
-    og_state: u32,
-}
-
-impl Xorshift32 {
-    fn new(seed: u32) -> Self {
-        let valid_seed = if seed == 0 { 1 } else { seed };
-        Self { state: valid_seed, og_state: valid_seed }
-    }
-
-    fn next(&mut self) -> u32 {
-        let mut x = self.state;
-        x ^= x << 13;
-        x ^= x >> 17;
-        x ^= x << 5;
-        self.state = x;
-        x
-    }
-
-    fn rst_state(&mut self) {
-        self.state = self.og_state;
-    }
-}
-
+use std::hash::{Hash, Hasher};
 
 struct BloomFilter {
     filter: Vec<bool>,
     size: usize,
     k: usize,
-    rng: Xorshift32,
 }
 
 
@@ -43,17 +16,19 @@ impl BloomFilter {
             filter: vec![false; size],
             size,
             k,
-            rng: Xorshift32::new(fastrand::u32(..)),
         }
     }
-    fn hash(&mut self, item: &usize, kidx: usize) -> usize {
-        // wrapping mul's slightly better than xor
-        let hash = item.wrapping_mul(self.rng.next() as usize);
-        hash ^ (hash >> 16)
+
+    // Declaration: I asked AI (chatgpt.com) about best utilization of DefaultHasher and used this
+    fn hash<T: Hash>(&self, item: &T, i: usize) -> usize {
+        let mut h = DefaultHasher::new();
+        i.hash(&mut h);
+        item.hash(&mut h);
+        (h.finish() as usize) % self.size
     }
 
+
     fn add(&mut self, item: &usize) {
-        self.rng.rst_state();
 
         for i in 0..self.k {
             let hash = self.hash(item, i) % self.size;
@@ -62,8 +37,6 @@ impl BloomFilter {
     }
 
     fn contains(&mut self, item: &usize) -> bool {
-        self.rng.rst_state();
-
         for i in 0..self.k {
             let hash = self.hash(item, i) % self.size;
             if !self.filter[hash] {

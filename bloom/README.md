@@ -30,9 +30,21 @@ My idea was to model this mathematically and to see if the model matches the emp
 
 Each addition chooses three independent indices and sets them all to one. This means that for i iterations, each index has $ki$ bernoulli trials to get selected. Each time, it has a $m^{-1}$ chance. You can use PIE to determine this. The probability that after $i$ iterations an index is *never* selected is $\left(1-\frac{1}{m}\right)^{ki}$, so the probability of being selected at least once is one minus that, $1-\left(\left(1-\frac{1}{m}\right)^{ki}\right)$. For a false positive to be declared, all $k$ must have this condition pass, so the false positive rate is $\left(1-\left(1-\frac{1}{m}\right)^{ki}\right)^{k}$
 
-The desmos graph strongly correlates this, giving an extremely high $R^2=0.9986$.
+The desmos graph strongly correlates this, yielding extremely high $R^2=0.9986$ and $R^2=0.9922$ for the $m$ and $k$ sweeps respectively.
 
 ![alt text](doc/image.png)
+
+And for the $k$ sweep: 
+
+![alt text](doc/i2.png)
+
+
+## Graphs:
+
+https://www.desmos.com/calculator/ekpgh5ivgw
+
+https://www.desmos.com/calculator/k4eg9cqjb8
+
 
 ## Run it yourself
 
@@ -45,5 +57,10 @@ To run:
 cd /tmp/; git clone https://github.com/JBlitzar/myrust.git; cd myrust/bloom; cargo run --release
 ```
 
-This produces the list of numbers used in the Desmos analysis
+This produces the lists of numbers used in the Desmos analysis
 
+## Resources
+
+https://en.wikipedia.org/wiki/Bloom_filters
+
+https://www.youtube.com/watch?v=V3pzxngeLqw

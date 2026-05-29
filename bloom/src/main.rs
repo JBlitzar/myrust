@@ -87,4 +87,15 @@ fn main() {
             evaluate_collisions(m, k, 1000, 1000);
         // }
     }
+    println!("");
+    println!("=== k sweep below; m sweep above ===");
+
+
+    for k in 1..50 {
+        // for k in 1..10 {
+        let m = 10_000;
+            // println!("Evaluating Bloom Filter with m = {}, k = {}", m, k);
+            evaluate_collisions(m, k, 1000, 1000);
+        // }
+    }
 }

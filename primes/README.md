@@ -74,14 +74,20 @@ Real statistics: `time:   [2.0984 ms, 2.2116 ms] -> 2.1548 ms`
 
 Cargo must be installed. See https://doc.rust-lang.org/cargo/getting-started/installation.html .
 
+
+To run:
+
 ```bash
 cd /tmp/; git clone https://github.com/JBlitzar/myrust.git; cd myrust/primes; cargo run --release
 ```
 
-I might provide release binaries at a later date.
+To benchmark:
 
-`cargo run --release` after `git clone`ing and `cd`ing in.
-`cargo bench` to run benchmarks
+```bash
+cd /tmp/; git clone https://github.com/JBlitzar/myrust.git; cd myrust/primes; cargo bench
+```
+
+I might provide release binaries at a later date.
 
 Use the calculatorsoup link to verify generated primes
 

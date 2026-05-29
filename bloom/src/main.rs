@@ -51,20 +51,24 @@ impl BloomFilter {
 
 }
 
-fn evaluate_collisions(m: usize,k: usize,iterations: usize){
+fn evaluate_collisions(m: usize,k: usize,fill: usize, iterations: usize){
     let mut filter = BloomFilter::new(m, k);
     let mut rng = fastrand::Rng::new();
     let mut false_positives = 0;
-    for _ in 0..iterations {
+    for _ in 0..fill {
         let item = rng.usize(..); // the probability of usize collisions is negligible. Otherwise we could, idk, use another bloom filter to check if its already added or something lol
         // 2^64 is really big. As long as we do an amount of iterations less than 10^19, we're proably fine. 10^6 isn't even close. 
-        if filter.contains(&item) {
-            false_positives += 1;
-        }
         filter.add(&item);
         
     }
-    println!("{}",false_positives);
+
+    for _ in 0..iterations {
+        let item = rng.usize(..);
+        if filter.contains(&item) {
+            false_positives += 1;
+        }
+    }
+    print!("{},",false_positives);
 }
 
 
@@ -76,11 +80,11 @@ fn main() {
     // println!("Contains 42? {}", filter.contains(&42));
     // println!("Contains 43? {}", filter.contains(&43));
 
-    for m in 1..100_000 {
+    for m in 1..10_000 {
         // for k in 1..10 {
         let k = 3;
             // println!("Evaluating Bloom Filter with m = {}, k = {}", m, k);
-            evaluate_collisions(m, k, 1000);
+            evaluate_collisions(m, k, 1000, 1000);
         // }
     }
 }
